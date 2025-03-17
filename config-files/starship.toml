@@ -1,0 +1,63 @@
+format = """
+$username$hostname $git_status $fill $shell $memory_usage
+$cmd_duration $directory$git_branch$character"""
+
+right_format = """$time"""
+
+[time]
+format = "[$time](bold cyan)"
+time_format = "%H:%M"
+disabled = false
+
+[directory]
+truncation_length = 3
+style = "bold"
+
+[git_branch]
+symbol = "on "
+style = "green"
+
+[git_status]
+conflicted = "!"
+ahead = "^"
+behind = "v"
+diverged = "<>"
+
+[python]
+symbol = "py"
+pyenv_version_name = true
+format = "[$symbol$virtualenv](blue bold)"
+
+[cmd_duration]
+format = "[$duration](yellow)"
+min_time = 1
+
+[username]
+show_always = true
+format = "[$user on ](bold cyan)"
+
+[hostname]
+ssh_only = false
+format = "[$hostname](bold yellow)"
+
+[character]
+success_symbol = "[:3 ](bold green)"
+error_symbol = "[:x ](bold red)"
+vicmd_symbol = "[:3 ](bold yellow)"
+
+[memory_usage]
+disabled = false
+symbol = "ram: "
+style = "bold green"
+format = "[ram: $ram]($style)"
+threshold = -1
+
+[shell]
+disabled = false
+elvish_indicator = 'elv'
+unknown_indicator = '?sh'
+
+[fill]
+symbol = "-"
+style = "dim black"
+
