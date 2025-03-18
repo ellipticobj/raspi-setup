@@ -64,7 +64,7 @@ install_pyenv() {
         return  
     fi  
 
-    if curl -fsSL "https://raw.githubusercontent.com/ellipticobj/meower/refs/heads/main/install.sh" | sh >/dev/null; then  
+    if curl -fsSL "https://raw.githubusercontent.com/ellipticobj/meower/refs/heads/v1/gitinstall.sh" | sh >/dev/null; then  
         log success "meower installed"  
     else  
         log error "failed to install meower"  
