@@ -1,66 +1,65 @@
-#!/usr/bin/bash
+#!/usr/bin/bash  
+# raspberry pi setup script  
+# component: git configuration  
+# description: configures git, gh, and ssh signing  
+# author: luna @ellipticobj 
 
-set -eu
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)  
+source "${SCRIPT_DIR}/lib/common.sh"  
 
-GREEN="\033[0;32m"
-YELLOW="\033[1;33m"
-RED="\033[0;31m"
-NC="\033[0m"
+validate_email() {  
+    [[ "$1" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]  
+}  
 
-validate_email() {
-    local useremail=$1
-    [[ "$useremail" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]] && return 0 || return 1  
-}
+validate_signingkey() {  
+    [[ -f "$1" ]] && ssh-keygen -l -f "$1" &>/dev/null  
+}  
 
-trap 'echo -e "\n${RED}interrupted${NC}"; exit 1' INT TERM
+log info "setting up git..."
 
-echo -e "${YELLOW}this script will install and configure git, gh and tig${NC}"
-echo
+check_deps git tig gh || {  
+    log error "missing dependencies - run install-packages.sh first"  
+    exit 1  
+}  
 
-echo -e "${YELLOW}installing git and tig...${NC}"
-sudo apt update
-sudo apt install -y git tig gh
-echo 
-while :; do
-    read -rep "enter your email: " useremail
-    read -rep "enter your name : " username
-    echo
+log warn "configuring git..."  
+while :; do  
+    read -rep "enter your email: " USER_EMAIL  
+    read -rep "enter your name : " USER_NAME  
+    echo  
 
-    if validate_email "$useremail" && [[ -n "$username" ]]; then
-        echo -e "email: ${GREEN}$useremail${NC}"
-        echo -e "name : ${GREEN}$username${NC}"
-        read -rp "are these details correct? [Y/n] " confirm
-        [[ "$confirm" =~ [Nn] ]] && continue
-        break
-    else
-        echo -e "${RED}invalid input${NC}"
-        if ! validate_email "$useremail"; then
-            echo -e "${RED}invalid email format${NC}"
-        fi
-        [[ ! -n "$username" ]] && echo -e "${RED}name cannot be empty${NC}"
-    fi
-done
+    if validate_email "$USER_EMAIL" && [[ -n "$USER_NAME" ]]; then  
+        log success "email: ${USER_EMAIL}"  
+        log success "name: ${USER_NAME}"  
+        confirm "are these details correct?" && break  
+    else  
+        [[ -z "$USER_NAME" ]] && log error "name cannot be empty"  
+        ! validate_email "$USER_EMAIL" && log error "invalid email format"  
+    fi  
+done  
 
-echo -e "\n${YELLOW}configuring git...${NC}"
-git config --global user.email "$useremail"
-git config --global user.name "$username"
-git config --global init.defaultBranch main
-git config --global pull.rebase false
-git config --global --add safe.directory '*'
-echo
+git config --global user.email "$USER_EMAIL"  
+git config --global user.name "$USER_NAME"  
+git config --global init.defaultBranch main  
+git config --global pull.rebase false  
+git config --global --add safe.directory '*'  
+log success "git identity configured"  
 
-while :; do
-    read -rp "set up ssh commit signing? [Y/n] " sshsignconf
-    [[ $sshsignconf =~ [Nn] ]] && break
-    echo
-    echo -e "${YELLOW}setting up ssh commit signing${NC}"
-    git config --global gpg.format ssh
-    echo
-    read -rp "enter path to signing key: " signingkeypath
-    git config --global user.signingkey "$signingkeypath"
-    echo -e "${GREEN}ssh commit signing done${NC}"
-    break
-done
+if confirm "set up ssh commit signing?"; then  
+    while :; do  
+        read -rp "enter path to signing key [~/.ssh/id_ed25519]: " SIGNING_KEY_PATH  
+        SIGNING_KEY_PATH=${SIGNING_KEY_PATH:-~/.ssh/id_ed25519}  
+        SIGNING_KEY_PATH="${SIGNING_KEY_PATH/#\~/$HOME}"  
 
-echo
-echo -e "${GREEN}git configured!${NC}"
+        if validate_signingkey "$SIGNING_KEY_PATH"; then  
+            git config --global gpg.format ssh  
+            git config --global user.signingkey "$SIGNING_KEY_PATH"  
+            log success "ssh signing configured with ${SIGNING_KEY_PATH}"  
+            break  
+        else  
+            log error "invalid ssh key file"  
+        fi  
+    done  
+fi  
+
+log success "git setup complete"  
