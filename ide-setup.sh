@@ -4,15 +4,22 @@
 # description: sets up neovim with vim-plug and pyenv  
 # author: luna @elliptcobj
 
-SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)  
-source "${SCRIPT_DIR}/lib/common.sh"  
+source ./common.sh
 
 PLUG_PATH="${XDG_DATA_HOME:-$HOME/.local/share}/nvim/site/autoload/plug.vim"  
 CONFIG_FILE="${HOME}/.config/nvim/init.vim"  
 
-check_deps curl || exit 1  
+print_header() {
+    echo -e "${BLUE}"
+    echo "──────────────────────────────────────"
+    echo "            ide setup"
+    echo "──────────────────────────────────────"
+    echo -e "${NC}"
+}
 
-log info "ide setup"
+print_header
+
+check_deps curl || exit 1  
 
 log warn "checking dependencies..."  
 if ! command -v nvim >/dev/null; then  

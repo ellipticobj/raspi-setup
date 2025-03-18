@@ -4,8 +4,7 @@
 # description: configures git, gh, and ssh signing  
 # author: luna @ellipticobj 
 
-SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)  
-source "${SCRIPT_DIR}/lib/common.sh"  
+source ./common.sh
 
 validate_email() {  
     [[ "$1" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]]  
@@ -15,7 +14,15 @@ validate_signingkey() {
     [[ -f "$1" ]] && ssh-keygen -l -f "$1" &>/dev/null  
 }  
 
-log info "setting up git..."
+print_header() {
+    echo -e "${BLUE}"
+    echo "──────────────────────────────────────"
+    echo "             git setup"
+    echo "──────────────────────────────────────"
+    echo -e "${NC}"
+}
+
+print_header
 
 check_deps git tig gh || {  
     log error "missing dependencies - run install-packages.sh first"  

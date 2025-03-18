@@ -23,6 +23,7 @@ log() {
 }  
 
 confirm() {  
+    [[ "$NON_INTERACTIVE" == true ]] && return 0
     local prompt="$1"  
     read -rp "$prompt [y/n] " response  
     [[ "$response" =~ ^[yY] ]]  

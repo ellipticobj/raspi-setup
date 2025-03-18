@@ -4,8 +4,7 @@
 # description: sets up fish shell and starship prompt  
 # author: luna @ellipticobj
 
-SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)  
-source "${SCRIPT_DIR}/lib/common.sh"  
+source ./common.sh
 
 FISH_CONFIG_SOURCE="${SCRIPT_DIR}/config-files/dotconfig/fish/config.fish"  
 STARSHIP_CONFIG_SOURCE="${SCRIPT_DIR}/config-files/dotconfig/starship.toml"  
@@ -57,7 +56,15 @@ post_install() {
     fi  
 }  
 
-log info "shell setup"
+print_header() {
+    echo -e "${BLUE}"
+    echo "──────────────────────────────────────"
+    echo "         shell configuration"
+    echo "──────────────────────────────────────"
+    echo -e "${NC}"
+}
+
+[[ -z "$NON_INTERACTIVE" ]] && print_header
 
 check_deps curl git || exit 1  
 

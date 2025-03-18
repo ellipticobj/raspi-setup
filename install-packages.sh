@@ -4,8 +4,7 @@
 # description: installs system packages and tools  
 # author: luna @ellipticobj  
 
-SCRIPT_DIR=$(cd "$(dirname "${bash_source[0]}")" && pwd)  
-source "${SCRIPT_DIR}/lib/common.sh"  
+source ./common.sh
 
 install_packages() {  
     local packages=(  
@@ -58,9 +57,17 @@ install_pyenv() {
     fi  
 }  
 
-trap 'log error "installation interrupted"; exit 1' int term  
+print_header() {
+    echo -e "${BLUE}"
+    echo "──────────────────────────────────────"
+    echo "         package installer"
+    echo "──────────────────────────────────────"
+    echo -e "${NC}"
+}
 
-log info "installing packages"
+print_header
+
+trap 'log error "installation interrupted"; exit 1' int term
 
 DRY_RUN=false  
 [[ "${1:-}" == "--dry-run" ]] && DRY_RUN=true  

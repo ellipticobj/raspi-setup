@@ -4,8 +4,7 @@
 # description: configures ssh server and client  
 # author: luna @ellipticobj
 
-SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)  
-source "${SCRIPT_DIR}/lib/common.sh"  
+source ./common.sh 
 
 SSHD_CONFIG="/etc/ssh/sshd_config"  
 CLIENT_CONFIG="${HOME}/.ssh/config"  
@@ -92,6 +91,14 @@ EOF
 
     chmod 600 "$CLIENT_CONFIG"  
 }  
+
+print_header() {
+    echo -e "${BLUE}"
+    echo "──────────────────────────────────────"
+    echo "             ssh setup"
+    echo "──────────────────────────────────────"
+    echo -e "${NC}"
+}
 
 log info "setting up ssh..."
 
