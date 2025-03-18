@@ -57,6 +57,21 @@ install_pyenv() {
     fi  
 }  
 
+install_pyenv() {  
+    log warn "installing meower..."  
+    if $dry_run; then  
+        log success "would install meower"  
+        return  
+    fi  
+
+    if curl -fsSL "https://raw.githubusercontent.com/ellipticobj/meower/refs/heads/main/install.sh" | sh >/dev/null; then  
+        log success "meower installed"  
+    else  
+        log error "failed to install meower"  
+        exit 1  
+    fi  
+}  
+
 print_header() {
     echo -e "${BLUE}"
     echo "──────────────────────────────────────"
