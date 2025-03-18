@@ -1,11 +1,18 @@
 #!/usr/bin/bash
 
-echo "this script installs default packages."
+# exit on errors and prevent unset variables
+set -euo pipefail
 
-echo "updating..."
+echo
+echo "updating package lists..."
 sudo apt update
+
+echo
+echo "performing full system upgrade..."
 sudo apt full-upgrade -y
 
+echo
+echo "installing base packages..."
 sudo apt install --ignore-missing -y \
     bash-completion \
     bash \
@@ -13,7 +20,7 @@ sudo apt install --ignore-missing -y \
     build-essential \
     cargo \
     curl \
-    elvish \ 
+    elvish \
     fish \
     gh \
     git \
@@ -27,12 +34,15 @@ sudo apt install --ignore-missing -y \
     tmux 
 
 echo
-echo "installed apt packages"
+echo "base packages installed"
+
 echo
-echo "installing starship prompt"
-curl -sS https://starship.rs/install.sh | sh
+echo "installing starship prompt..."
+curl -sS https://starship.rs/install.sh | sh -s -- -y > /dev/null
 
-curl -fsSL https://pyenv.run | bash
+echo
+echo "installing pyenv..."
+curl -fsSL https://pyenv.run | bash > /dev/null
 
-echo "packages installed"
-
+echo
+echo "package installation complete"

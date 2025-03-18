@@ -201,7 +201,10 @@ main() {
     configure_static_ip
     restart_networking
     configure_sshd
-    configure_client
+    read -rp "set up .ssh/config file? [y/N] " configclient
+    if [[ configclient =~ [Yy] ]]; then
+        configure_client
+    fi
     generate_keys
 
     echo -e "\n${GREEN}SSH setup complete!${NC}"
