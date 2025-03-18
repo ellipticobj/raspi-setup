@@ -33,7 +33,6 @@ echo "installing starship prompt"
 curl -sS https://starship.rs/install.sh | sh
 
 curl -fsSL https://pyenv.run | bash
-echo "pyenv init - fish | source" >> ~/.config/fish/config.fish
 
 echo "packages installed"
 

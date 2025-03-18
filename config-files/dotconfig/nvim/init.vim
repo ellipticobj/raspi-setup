@@ -7,6 +7,7 @@ Plug 'tpope/vim-surround'       " surround selections
 Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'         " fzf integration
 Plug 'mileszs/ack.vim'          " code searching
+Plug 'wakatime/vim-wakatime'    " wakatime integration
 
 " navigation
 Plug 'christoomey/vim-tmux-navigator' " better tmux navigation
@@ -18,7 +19,6 @@ Plug 'norcalli/nvim-colorizer.lua' " color highlighter
 Plug 'ap/vim-buftabline'        " buffer management
 
 " syntax/lsp
-Plug 'neoclide/coc.nvim', { 'branch': 'release' } " intellisense
 Plug 'sheerun/vim-polyglot'     " better syntax highlighting
 
 " languages
@@ -28,7 +28,6 @@ Plug 'dense-analysis/ale'
 
 call plug#end()
 
-source /home/luna/.config/nvim/coc-config.vim
 
 " ======== language-specific settings ========
 " rust
@@ -59,7 +58,6 @@ nnoremap <silent> <C-h> <C-w>h
 nnoremap <silent> <C-l> <C-w>l
 
 " ================= settings ================
-let g:coc_disable_startup_warning = 1
 let mapleader = "\<Space>"
 set number relativenumber
 set hidden
@@ -70,8 +68,6 @@ syntax enable
 
 noremap <leader>w :w<CR>
 noremap <leader>q :q<CR>
-noremap <leader>e :CocCommand explorer<CR>
-noremap <leader>g :CocDiagnostics<CR>
 
 " ============== plugin config =============
 let g:lightline = { 'colorscheme': 'wombat' }

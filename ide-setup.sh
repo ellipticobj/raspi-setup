@@ -46,3 +46,10 @@ echo -e "${YELLOW}installing plugins now${NC}"
 nvim --headless +PlugInstall +qall
 echo
 echo -e "${GREEN}nvim setup complete!${NC}"
+
+echo -e "${YELLOW}setting up pyenv...${NC}"
+set -Ux PYENV_ROOT $HOME/.pyenv
+fish_add_path $PYENV_ROOT/bin
+echo "pyenv init - fish | source" > ~/.config/fish/config.fish
+echo
+echo -e "${GREEN}setup complete!${NC}"
