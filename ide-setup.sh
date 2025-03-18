@@ -41,10 +41,8 @@ fi
 
 echo -e "${YELLOW}creating init.vim...${NC}"
 cp "./config-files/dotconfig/nvim/init.vim" "~/.config/nvim/init.vim"
-cp "./config-files/dotconfig/nvim/coc-config.vim" "~/.config/nvim/coc-config.vim"
 
 echo -e "${YELLOW}installing plugins now${NC}"
 nvim --headless +PlugInstall +qall
-nvim --headless "+CocInstall -sync coc-pyright coc-rust-analyzer coc-sh" +qall
 echo
 echo -e "${GREEN}nvim setup complete!${NC}"
