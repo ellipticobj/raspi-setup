@@ -1,5 +1,5 @@
 format = """
-$username$hostname $git_status $fill $shell $memory_usage
+$username$hostname$sudo $git_status $fill $shell $memory_usage
 $cmd_duration $directory$git_branch$character"""
 
 right_format = """$time"""
@@ -57,7 +57,8 @@ disabled = false
 elvish_indicator = 'elv'
 unknown_indicator = '?sh'
 
-[fill]
-symbol = "-"
-style = "dim black"
-
+[sudo]
+style = 'bold green'
+symbol = 'sudo'
+disabled = false
+format = '[ as $symbol]($style)'
