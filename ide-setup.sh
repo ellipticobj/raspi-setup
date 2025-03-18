@@ -43,7 +43,7 @@ if [[ -f "$CONFIG_FILE" ]]; then
 	log warn "backed up existing init.vim"  
 fi  
 
-cp "${SCRIPT_DIR}/config-files/dotconfig/nvim/init.vim" "$CONFIG_FILE"  
+cp "./config-files/dotconfig/nvim/init.vim" "$CONFIG_FILE"  
 log success "neovim config created"  
 
 log warn "installing plugins..."  

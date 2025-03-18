@@ -15,7 +15,7 @@ install_packages() {
 
     log warn "installing base packages..."  
     if $dry_run; then  
-        log success "would install: ${packages[*]}"  
+        log success "install: ${packages[*]}"  
         return  
     fi  
 
@@ -30,7 +30,7 @@ install_packages() {
 install_starship() {  
     log warn "installing starship prompt..."  
     if $dry_run; then  
-        log success "would install starship"  
+        log success "install starship"  
         return  
     fi  
 
@@ -45,7 +45,7 @@ install_starship() {
 install_pyenv() {  
     log warn "installing pyenv..."  
     if $dry_run; then  
-        log success "would install pyenv"  
+        log success "install pyenv"  
         return  
     fi  
 

@@ -6,8 +6,8 @@
 
 source ./common.sh
 
-FISH_CONFIG_SOURCE="${SCRIPT_DIR}/config-files/dotconfig/fish/config.fish"  
-STARSHIP_CONFIG_SOURCE="${SCRIPT_DIR}/config-files/dotconfig/starship.toml"  
+FISH_CONFIG_SOURCE="./config-files/dotconfig/fish/config.fish"  
+STARSHIP_CONFIG_SOURCE="./config-files/dotconfig/starship.toml"  
 FISH_CONFIG_DIR="${HOME}/.config/fish"  
 STARSHIP_CONFIG_DIR="${HOME}/.config"  
 
