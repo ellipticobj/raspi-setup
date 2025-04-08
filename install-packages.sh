@@ -7,19 +7,9 @@
 source ./common.sh
 
 install_packages() {  
-    local packages=(  
-        bash-completion btop build-essential cargo curl  
-        elvish fish gh git gzip nano neofetch neovim  
-        python3 rustup tig tmux  
-    )  
+    log warn "installing base packages..."
 
-    log warn "installing base packages..."  
-    if $dry_run; then  
-        log success "install: ${packages[*]}"  
-        return  
-    fi  
-
-    if sudo apt install -y --ignore-missing "${packages[@]}"; then  
+    if sudo apt install -y --ignore-missing bash-completion btop build-essential cargo curl elvish fish gh git gzip nano neofetch neovim python3 rustup tig tmux; then  
         log success "base packages installed"  
     else  
         log error "failed to install base packages"  
@@ -28,11 +18,7 @@ install_packages() {
 }  
 
 install_starship() {  
-    log warn "installing starship prompt..."  
-    if $dry_run; then  
-        log success "install starship"  
-        return  
-    fi  
+    log warn "installing starship prompt..."
 
     if curl -ss https://starship.rs/install.sh | sh -s -- -y >/dev/null; then  
         log success "starship installed"  
@@ -44,10 +30,6 @@ install_starship() {
 
 install_pyenv() {  
     log warn "installing pyenv..."  
-    if $dry_run; then  
-        log success "install pyenv"  
-        return  
-    fi  
 
     if curl -fssl https://pyenv.run | bash >/dev/null; then  
         log success "pyenv installed"  
@@ -57,12 +39,8 @@ install_pyenv() {
     fi  
 }  
 
-install_pyenv() {  
+install_meower() {  
     log warn "installing meower..."  
-    if $dry_run; then  
-        log success "would install meower"  
-        return  
-    fi  
 
     if curl -fsSL "https://raw.githubusercontent.com/ellipticobj/meower/refs/heads/v1/gitinstall.sh" | sh >/dev/null; then  
         log success "meower installed"  
@@ -84,11 +62,7 @@ print_header
 
 trap 'log error "installation interrupted"; exit 1' int term
 
-DRY_RUN=false  
-[[ "${1:-}" == "--dry-run" ]] && DRY_RUN=true  
-
 log warn "this will modify system packages"  
-$DRY_RUN && log warn "dry run mode enabled"  
 
 if ! confirm "continue with package installation?"; then  
     log warn "installation canceled"  
@@ -96,15 +70,14 @@ if ! confirm "continue with package installation?"; then
 fi  
 
 log warn "updating package lists..."  
-if ! $DRY_RUN; then  
-    sudo apt update || {  
-        log error "failed to update packages"  
-        exit 1  
-    }  
+if ! sudo apt update; then  
+    log error "failed to update packages"  
+    exit 1  
 fi  
 
 install_packages  
 install_starship  
 install_pyenv  
+install_meower  
 
 log success "package installation complete"  
