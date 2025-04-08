@@ -9,7 +9,7 @@ source ./common.sh
 install_packages() {  
     log warn "installing base packages..."
 
-    if sudo apt install -y --ignore-missing bash-completion btop build-essential cargo curl elvish fish gh git gzip nano neofetch neovim python3 rustup tig tmux; then  
+    if sudo apt install -y --ignore-missing bash-completion btop build-essential cargo curl elvish fish gh git gzip nano neofetch neovim python3 tig tmux; then  
         log success "base packages installed"  
     else  
         log error "failed to install base packages"  
