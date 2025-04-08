@@ -10,14 +10,24 @@ SSHD_CONFIG="/etc/ssh/sshd_config"
 CLIENT_CONFIG="${HOME}/.ssh/config"
 CONFIG_DIR="${HOME}/.ssh"
 
+validate_ip() {
+    local ip="$1"
+    [[ "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]] &&
+    IFS='.' read -ra PARTS <<< "$ip" &&
+    [[ "${PARTS[0]}" -le 255 && "${PARTS[1]}" -le 255 &&
+      "${PARTS[2]}" -le 255 && "${PARTS[3]}" -le 255 ]]
+}
+
+check_root() {
+    [[ "$EUID" -eq 0 ]] || {
+        log error "run as root required"
+        exit 1
+    }
+}
+
 configure_sshd() {
     log warn "configuring ssh server... (/etc/ssh/sshd_config)"
-
-    # Backup the original config
-    if [ -f "$SSHD_CONFIG" ]; then
-        log warn "backing up original sshd_config"
-        sudo cp "$SSHD_CONFIG" "$SSHD_CONFIG.bak.$(date +%Y%m%d%H%M%S)"
-    fi
+    sudo mv "$SSHD_CONFIG" "$SSHD_CONFIG.bak"
 
     while :; do
         read -rp "enter ssh port [22]: " SSH_PORT
@@ -26,49 +36,23 @@ configure_sshd() {
         log error "invalid port number"
     done
 
-    log warn "modifying ssh server configuration"
+    sudo sed -i "s/^#*Port .*/Port $SSH_PORT/" "$SSHD_CONFIG"
+    sudo sed -i "s/^#*PermitRootLogin .*/PermitRootLogin no/" "$SSHD_CONFIG"
+    sudo sed -i "s/^#*PasswordAuthentication .*/PasswordAuthentication no/" "$SSHD_CONFIG"
 
-    sudo sed -i "s/^#*Port .*/Port $SSH_PORT/" "$SSHD_CONFIG" 2>/dev/null || sudo sh -c "echo 'Port $SSH_PORT' >> $SSHD_CONFIG"
-    sudo sed -i "s/^#*PermitRootLogin .*/PermitRootLogin no/" "$SSHD_CONFIG" 2>/dev/null || sudo sh -c "echo 'PermitRootLogin no' >> $SSHD_CONFIG"
-    sudo sed -i "s/^#*PasswordAuthentication .*/PasswordAuthentication no/" "$SSHD_CONFIG" 2>/dev/null || sudo sh -c "echo 'PasswordAuthentication no' >> $SSHD_CONFIG"
-
-    # set proper permissions
-    sudo chmod 644 "$SSHD_CONFIG"
-
-    # restart the SSH service
-    log warn "restarting ssh service"
-    sudo systemctl restart sshd
-
-    # configure firewall if available and user wants to
     if command -v ufw >/dev/null; then
-        if confirm "Configure firewall for SSH?"; then
-            log warn "configuring firewall for port $SSH_PORT"
-            sudo ufw allow "$SSH_PORT"/tcp
-            log success "firewall rule added for port $SSH_PORT"
-
-            # check if firewall is active
-            if ! sudo ufw status | grep -q "Status: active"; then
-                if confirm "Enable firewall now?"; then
-                    log warn "enabling firewall"
-                    sudo ufw --force enable
-                    log success "firewall enabled"
-                else
-                    log warn "firewall rule added but firewall is not active"
-                    log warn "to enable the firewall later, run: sudo ufw enable"
-                fi
-            fi
-        else
-            log warn "skipping firewall configuration"
-        fi
+        sudo ufw allow "$SSH_PORT"/tcp
+        log success "firewall rule added for port $SSH_PORT"
     fi
 
+    sudo systemctl restart sshd
     log success "ssh server configured on port $SSH_PORT"
 }
 
 configure_client() {
     log warn "configuring ssh client... (~/.ssh/config)"
-    mkdir -p "$CONFIG_DIR"
-    chmod 700 "$CONFIG_DIR"
+    sudo mkdir -p "$CONFIG_DIR"
+    sudo chmod 700 "$CONFIG_DIR"
 
     while :; do
         read -rp "enter host alias: " HOST_ALIAS
@@ -77,18 +61,17 @@ configure_client() {
         read -rp "enter username [$(whoami)]: " USERNAME
         read -rp "enter ssh key [~/.ssh/id_ed25519]: " SSH_KEY
 
+        validate_ip "$SSH_IP" || {
+            log error "invalid ip address"
+            continue
+        }
+
         CUSTOM_PORT=${CUSTOM_PORT:-$SSH_PORT}
         USERNAME=${USERNAME:-$(whoami)}
         SSH_KEY="${SSH_KEY:-~/.ssh/id_ed25519}"
         SSH_KEY="${SSH_KEY/#\~/$HOME}"
 
-        # create the config file if it doesn't exist
-        if [ ! -f "$CLIENT_CONFIG" ]; then
-            touch "$CLIENT_CONFIG"
-            chmod 600 "$CLIENT_CONFIG"
-        fi
-
-        if grep -q "Host $HOST_ALIAS" "$CLIENT_CONFIG" 2>/dev/null; then
+        if grep -q "Host $HOST_ALIAS" "$CLIENT_CONFIG"; then
             log warn "host alias '$HOST_ALIAS' already exists"
             continue
         fi
@@ -106,7 +89,7 @@ EOF
         confirm "add another server?" || break
     done
 
-    chmod 600 "$CLIENT_CONFIG"
+    sudo chmod 600 "$CLIENT_CONFIG"
 }
 
 generate_ssh_key() {
@@ -130,23 +113,14 @@ check_deps ip awk || {
     exit 1
 }
 
-# ask user which components they want to set up
-log warn "SSH setup options:"
-
-# always generate SSH key
-if confirm "generate SSH key?"; then
-    generate_ssh_key
+if ! command -v ufw >/dev/null; then
+    log error "ufw not installed - run install-packages.sh first"
+    exit 1
 fi
 
-# configure SSH server
-if confirm "configure SSH server?"; then
-    configure_sshd
-fi
-
-# configure SSH client
-if confirm "configure SSH client?"; then
-    configure_client
-    echo -e "connect using: ${GREEN}ssh <host-alias>${NC}"
-fi
+generate_ssh_key
+configure_sshd
+configure_client
 
 log success "ssh setup complete"
+echo -e "connect using: ${green}ssh <host-alias>${nc}"
