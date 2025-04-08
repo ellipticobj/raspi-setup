@@ -124,11 +124,11 @@ if ! command -v starship >/dev/null; then
 fi
 
 
-log warn "This script will download shell configurations from ellipticobj's GitHub repository"
-log warn "Starship config: ${STARSHIP_CONFIG_URL}"
-log warn "Fish config: https://github.com/ellipticobj/dotfiles/tree/main/fish/.config/fish"
+log warn "this script will download shell configurations"
+log warn "starship config: ${STARSHIP_CONFIG_URL}"
+log warn "fish config: https://github.com/ellipticobj/dotfiles/tree/main/fish/.config/fish"
 
-if confirm "Do you want to download and install these configurations?"; then
+if confirm "do you want to download and install these configurations?"; then
     if download_configs; then
         post_install
         log success "shell setup complete"
