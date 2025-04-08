@@ -10,14 +10,6 @@ SSHD_CONFIG="/etc/ssh/sshd_config"
 CLIENT_CONFIG="${HOME}/.ssh/config"
 CONFIG_DIR="${HOME}/.ssh"
 
-validate_ip() {
-    local ip="$1"
-    [[ "$ip" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]] &&
-    IFS='.' read -ra PARTS <<< "$ip" &&
-    [[ "${PARTS[0]}" -le 255 && "${PARTS[1]}" -le 255 &&
-    "${PARTS[2]}" -le 255 && "${PARTS[3]}" -le 255 ]]
-}
-
 configure_sshd() {
     log warn "configuring ssh server... (/etc/ssh/sshd_config)"
 
@@ -49,15 +41,21 @@ configure_sshd() {
 
     # configure firewall if available and user wants to
     if command -v ufw >/dev/null; then
-        if confirm "configure firewall for SSH?"; then
+        if confirm "Configure firewall for SSH?"; then
             log warn "configuring firewall for port $SSH_PORT"
             sudo ufw allow "$SSH_PORT"/tcp
             log success "firewall rule added for port $SSH_PORT"
 
             # check if firewall is active
             if ! sudo ufw status | grep -q "Status: active"; then
-                log warn "firewall rule added but firewall is not active"
-                log warn "to enable the firewall, run: sudo ufw enable"
+                if confirm "Enable firewall now?"; then
+                    log warn "enabling firewall"
+                    sudo ufw --force enable
+                    log success "firewall enabled"
+                else
+                    log warn "firewall rule added but firewall is not active"
+                    log warn "to enable the firewall later, run: sudo ufw enable"
+                fi
             fi
         else
             log warn "skipping firewall configuration"
@@ -78,11 +76,6 @@ configure_client() {
         read -rp "enter ssh port [$SSH_PORT]: " CUSTOM_PORT
         read -rp "enter username [$(whoami)]: " USERNAME
         read -rp "enter ssh key [~/.ssh/id_ed25519]: " SSH_KEY
-
-        validate_ip "$SSH_IP" || {
-            log error "invalid ip address"
-            continue
-        }
 
         CUSTOM_PORT=${CUSTOM_PORT:-$SSH_PORT}
         USERNAME=${USERNAME:-$(whoami)}
@@ -137,9 +130,23 @@ check_deps ip awk || {
     exit 1
 }
 
-generate_ssh_key
-configure_sshd
-configure_client
+# ask user which components they want to set up
+log warn "SSH setup options:"
+
+# always generate SSH key
+if confirm "generate SSH key?"; then
+    generate_ssh_key
+fi
+
+# configure SSH server
+if confirm "configure SSH server?"; then
+    configure_sshd
+fi
+
+# configure SSH client
+if confirm "configure SSH client?"; then
+    configure_client
+    echo -e "connect using: ${GREEN}ssh <host-alias>${NC}"
+fi
 
 log success "ssh setup complete"
-echo -e "connect using: ${GREEN}ssh <host-alias>${NC}"
