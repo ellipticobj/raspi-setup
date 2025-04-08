@@ -26,8 +26,8 @@ check_root() {
 }  
 
 configure_sshd() {  
-    log warn "configuring ssh server..."  
-    backup_config "$SSHD_CONFIG"  
+    log warn "configuring ssh server... (/etc/ssh/sshd_config)"
+    sudo mv "$SSHD_CONFIG" "$SSHD_CONFIG.bak"
 
     while :; do  
         read -rp "enter ssh port [22]: " SSH_PORT  
@@ -36,23 +36,23 @@ configure_sshd() {
         log error "invalid port number"  
     done  
 
-    sed -i "s/^#*Port .*/Port $SSH_PORT/" "$SSHD_CONFIG"  
-    sed -i "s/^#*PermitRootLogin .*/PermitRootLogin no/" "$SSHD_CONFIG"  
-    sed -i "s/^#*PasswordAuthentication .*/PasswordAuthentication no/" "$SSHD_CONFIG"  
+    sudo sed -i "s/^#*Port .*/Port $SSH_PORT/" "$SSHD_CONFIG"  
+    sudo sed -i "s/^#*PermitRootLogin .*/PermitRootLogin no/" "$SSHD_CONFIG"  
+    sudo sed -i "s/^#*PasswordAuthentication .*/PasswordAuthentication no/" "$SSHD_CONFIG"  
 
     if command -v ufw >/dev/null; then  
-        ufw allow "$SSH_PORT"/tcp  
+        sudo ufw allow "$SSH_PORT"/tcp  
         log success "firewall rule added for port $SSH_PORT"  
     fi  
 
-    systemctl restart sshd  
+    sudo systemctl restart sshd  
     log success "ssh server configured on port $SSH_PORT"  
 }  
 
 configure_client() {  
-    log warn "configuring ssh client..."  
-    mkdir -p "$CONFIG_DIR"  
-    chmod 700 "$CONFIG_DIR"  
+    log warn "configuring ssh client... (~/.ssh/config)"  
+    sudo mkdir -p "$CONFIG_DIR"
+    sudo chmod 700 "$CONFIG_DIR"
 
     while :; do  
         read -rp "enter host alias: " HOST_ALIAS  
@@ -89,8 +89,14 @@ EOF
         confirm "add another server?" || break  
     done  
 
-    chmod 600 "$CLIENT_CONFIG"  
-}  
+    sudo chmod 600 "$CLIENT_CONFIG"  
+}
+
+generate_ssh_key() {  
+    log warn "generating ssh key..."  
+    ssh-keygen -t ed25519 -f "$HOME/.ssh/id_ed25519" -q -N ""  
+    log success "ssh key generated at $HOME/.ssh/id_ed25519"  
+}
 
 print_header() {
     echo -e "${BLUE}"
@@ -100,17 +106,21 @@ print_header() {
     echo -e "${NC}"
 }
 
-log info "setting up ssh..."
+[[ -z "$NON_INTERACTIVE" ]] && print_header
 
-check_root  
-check_deps ip awk || exit 1  
+check_deps ip awk || {  
+    log error "missing dependencies - run install-packages.sh first"  
+    exit 1  
+}  
 
-log warn "starting ssh configuration"  
-configure_sshd  
-
-if confirm "configure ssh client?"; then  
-    configure_client  
+if ! command -v ufw >/dev/null; then  
+    log error "ufw not installed - run install-packages.sh first"  
+    exit 1  
 fi  
 
-log success "ssh setup complete"  
-echo -e "connect using: ${green}ssh <host-alias>${nc}"  
+generate_ssh_key
+configure_sshd
+configure_client
+
+log success "ssh setup complete"
+echo -e "connect using: ${green}ssh <host-alias>${nc}"
