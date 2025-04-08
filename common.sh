@@ -17,7 +17,7 @@ log() {
     case "$level" in  
         success) echo -e "${GREEN}[✓] $timestamp - $*${NC}" ;;  
         warn) echo -e "${YELLOW}[!] $timestamp - $*${NC}" ;;  
-        error) echo -e "${RED}[✗] $timestamp - $*${NC}" ;;  
+        error) echo -e "${RED}[x] $timestamp - $*${NC}" ;;  
         *) echo "[i] $timestamp - $*" ;;  
     esac  
 }  

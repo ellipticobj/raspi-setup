@@ -6,6 +6,7 @@
 
 source ./common.sh
 
+SSHD_CONFIG="/etc/ssh/sshd_config"
 CLIENT_CONFIG="${HOME}/.ssh/config"
 CONFIG_DIR="${HOME}/.ssh"
 
@@ -18,8 +19,13 @@ validate_ip() {
 }
 
 configure_sshd() {
-    log warn "creating ssh server configuration template..."
-    local SSHD_CONFIG_TEMPLATE="${HOME}/sshd_config.template"
+    log warn "configuring ssh server... (/etc/ssh/sshd_config)"
+
+    # Backup the original config
+    if [ -f "$SSHD_CONFIG" ]; then
+        log warn "backing up original sshd_config"
+        sudo cp "$SSHD_CONFIG" "$SSHD_CONFIG.bak.$(date +%Y%m%d%H%M%S)"
+    fi
 
     while :; do
         read -rp "enter ssh port [22]: " SSH_PORT
@@ -28,25 +34,37 @@ configure_sshd() {
         log error "invalid port number"
     done
 
-    # Create a template file with recommended settings
-    cat > "$SSHD_CONFIG_TEMPLATE" << EOF
-# SSH Server Configuration Template
-# Copy these settings to /etc/ssh/sshd_config
+    log warn "modifying ssh server configuration"
 
-Port $SSH_PORT
-PermitRootLogin no
-PasswordAuthentication no
-EOF
+    sudo sed -i "s/^#*Port .*/Port $SSH_PORT/" "$SSHD_CONFIG" 2>/dev/null || sudo sh -c "echo 'Port $SSH_PORT' >> $SSHD_CONFIG"
+    sudo sed -i "s/^#*PermitRootLogin .*/PermitRootLogin no/" "$SSHD_CONFIG" 2>/dev/null || sudo sh -c "echo 'PermitRootLogin no' >> $SSHD_CONFIG"
+    sudo sed -i "s/^#*PasswordAuthentication .*/PasswordAuthentication no/" "$SSHD_CONFIG" 2>/dev/null || sudo sh -c "echo 'PasswordAuthentication no' >> $SSHD_CONFIG"
 
-    log success "ssh server configuration template created at $SSHD_CONFIG_TEMPLATE"
-    log warn "To apply these settings, run the following commands as root:"
-    echo -e "${YELLOW}sudo cp $SSHD_CONFIG_TEMPLATE /etc/ssh/sshd_config${NC}"
-    echo -e "${YELLOW}sudo systemctl restart sshd${NC}"
+    # set proper permissions
+    sudo chmod 644 "$SSHD_CONFIG"
 
+    # restart the SSH service
+    log warn "restarting ssh service"
+    sudo systemctl restart sshd
+
+    # configure firewall if available and user wants to
     if command -v ufw >/dev/null; then
-        log warn "To configure the firewall, run:"
-        echo -e "${YELLOW}sudo ufw allow $SSH_PORT/tcp${NC}"
+        if confirm "configure firewall for SSH?"; then
+            log warn "configuring firewall for port $SSH_PORT"
+            sudo ufw allow "$SSH_PORT"/tcp
+            log success "firewall rule added for port $SSH_PORT"
+
+            # check if firewall is active
+            if ! sudo ufw status | grep -q "Status: active"; then
+                log warn "firewall rule added but firewall is not active"
+                log warn "to enable the firewall, run: sudo ufw enable"
+            fi
+        else
+            log warn "skipping firewall configuration"
+        fi
     fi
+
+    log success "ssh server configured on port $SSH_PORT"
 }
 
 configure_client() {
@@ -120,12 +138,21 @@ check_deps ip awk || {
 }
 
 if ! command -v ufw >/dev/null; then
-    log warn "ufw not installed - some firewall features will be unavailable"
+    log warn "ufw (Uncomplicated Firewall) is not installed"
+    if confirm "Do you want to install ufw for firewall protection?"; then
+        log warn "installing ufw..."
+        sudo apt-get update && sudo apt-get install -y ufw
+        log success "ufw installed"
+    else
+        log warn "skipping firewall installation - some security features will be unavailable"
+    fi
 fi
+
+# No need to check for sudo access early - we'll use sudo for specific commands
 
 generate_ssh_key
 configure_sshd
 configure_client
 
 log success "ssh setup complete"
-echo -e "connect using: ${green}ssh <host-alias>${nc}"
+echo -e "connect using: ${GREEN}ssh <host-alias>${NC}"
