@@ -73,7 +73,7 @@ configure_client() {
 
         if grep -q "Host $HOST_ALIAS" "$CLIENT_CONFIG"; then  
             log warn "host alias '$HOST_ALIAS' already exists"  
-            continue  
+            continue
         fi  
 
         cat << EOF >> "$CLIENT_CONFIG"  
@@ -83,7 +83,7 @@ Host $HOST_ALIAS
     User $USERNAME  
     IdentityFile $SSH_KEY  
     ServerAliveInterval 60  
-EOF  
+EOF
         log success "added host $HOST_ALIAS"  
 
         confirm "add another server?" || break  
