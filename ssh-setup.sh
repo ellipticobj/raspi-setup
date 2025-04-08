@@ -137,19 +137,6 @@ check_deps ip awk || {
     exit 1
 }
 
-if ! command -v ufw >/dev/null; then
-    log warn "ufw (Uncomplicated Firewall) is not installed"
-    if confirm "Do you want to install ufw for firewall protection?"; then
-        log warn "installing ufw..."
-        sudo apt-get update && sudo apt-get install -y ufw
-        log success "ufw installed"
-    else
-        log warn "skipping firewall installation - some security features will be unavailable"
-    fi
-fi
-
-# No need to check for sudo access early - we'll use sudo for specific commands
-
 generate_ssh_key
 configure_sshd
 configure_client
